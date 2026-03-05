@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AI Health Analyzer</title>
+
+<style>
+body{
+    background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+    font-family:Arial;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    margin:0;
+}
+.container{
+    width:850px;
+    background:rgba(0,0,0,0.6);
+    padding:40px;
+    border-radius:15px;
+    box-shadow:0 0 30px #00f7ff;
+}
+h1{text-align:center;color:#00f7ff;margin-bottom:20px;}
+.info-box{
+    background:rgba(0,0,0,0.5);
+    padding:15px;
+    border-left:4px solid #00f7ff;
+    margin-bottom:25px;
+    border-radius:8px;
+}
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+label{font-size:14px;margin-bottom:5px;display:block;}
+input,select{
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    background:#111;
+    color:white;
+}
+input:focus,select:focus{
+    outline:none;
+    box-shadow:0 0 10px #00f7ff;
+}
+button{
+    margin-top:25px;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(90deg,#00f7ff,#00ff9c);
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+button:hover{
+    box-shadow:0 0 20px #00f7ff;
+    transform:scale(1.03);
+}
+.result-box{
+    margin-top:30px;
+    padding:20px;
+    border:1px solid #00f7ff;
+    border-radius:10px;
+    box-shadow:0 0 20px #00f7ff;
+    text-align:center;
+}
+.prediction{
+    font-size:24px;
+    color:#00ff9c;
+    font-weight:bold;
+}
+.bmi-bar{
+    display:flex;
+    width:100%;
+    margin-top:20px;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.under{background:#00f7ff;}
+.normal{background:#00ff9c;}
+.over{background:#ffd000;}
+.obese{background:#ff0066;}
+.health-score{
+    margin-top:30px;
+    text-align:center;
+}
+.score-circle{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    border:4px solid #00f7ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+    color:#0cd2d8;
+    margin:auto;
+    box-shadow:0 0 20px #00f7ff;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>🧠 AI Health Analyzer</h1>
+
+<div class="info-box">
+<h3>📊 Qu'est-ce que l'IMC ?</h3>
+<p>L’IMC (Indice de Masse Corporelle) permet d’évaluer si votre poids est adapté à votre taille.</p>
+<p>Formule : <b>IMC = Poids / Taille²</b></p>
+<p>Notre intelligence artificielle analyse également vos habitudes alimentaires et votre activité physique pour prédire votre niveau d’obésité.</p>
+</div>
+
+<form action="/predict" method="post" id="health-form">
+<div class="form-grid">
+
+<div>
+<label>Age</label>
+<input type="number" name="Age" placeholder="ex: 25" required>
+</div>
+
+<div>
+<label>Height (m)</label>
+<input type="number" step="0.01" name="Height" placeholder="ex: 1.75" required>
+</div>
+
+<div>
+<label>Weight (kg)</label>
+<input type="number" step="0.1" name="Weight" placeholder="ex: 68" required>
+</div>
+
+<div>
+<label>Consommation de légumes</label>
+<select name="FCVC">
+<option value="1">Faible</option>
+<option value="2">Moyenne</option>
+<option value="3">Élevée</option>
+</select>
+</div>
+
+<div>
+<label>Nombre de repas par jour</label>
+<select name="NCP">
+<option value="1">1 repas</option>
+<option value="2">2 repas</option>
+<option value="3">3 repas</option>
+<option value="4">4 repas ou plus</option>
+</select>
+</div>
+
+<div>
+<label>Consommation d'eau</label>
+<select name="CH2O">
+<option value="1">Moins de 1L</option>
+<option value="2">1 - 2L</option>
+<option value="3">Plus de 2L</option>
+</select>
+</div>
+
+<div>
+<label>Activité physique</label>
+<select name="FAF">
+<option value="0">Aucune</option>
+<option value="1">1-2 jours</option>
+<option value="2">3-4 jours</option>
+<option value="3">5+ jours</option>
+</select>
+</div>
+
+<div>
+<label>Temps écran par jour</label>
+<select name="TUE">
+<option value="0">Moins de 1h</option>
+<option value="1">1-3h</option>
+<option value="2">3-5h</option>
+<option value="3">Plus de 5h</option>
+</select>
+</div>
+
+</div>
+
+<button type="submit">⚡ Lancer l'analyse IA</button>
+<p id="bmi-live" style="text-align:center;font-weight:bold;margin-top:15px;"></p>
+</form>
+
+{% if prediction %}
+<div class="result-box">
+<h2>🧠 Résultat de l'analyse</h2>
+<p class="prediction">{{ prediction }}</p>
+<p>IMC : {{ bmi }} — {{ bmi_status }}</p>
+<p>Conseil : {{ advice }}</p>
+
+<div class="health-score">
+<h3>⚡ Score Santé</h3>
+<div class="score-circle">{{ score }}</div>
+<p>Score basé sur vos habitudes alimentaires et physiques</p>
+</div>
+
+
+{% endif %}
+
+</div>
+
+<script>
+const heightInput = document.querySelector('input[name="Height"]');
+const weightInput = document.querySelector('input[name="Weight"]');
+const bmiLive = document.getElementById('bmi-live');
+
+function calculateBMI() {
+    const height = parseFloat(heightInput.value);
+    const weight = parseFloat(weightInput.value);
+    if (height > 0 && weight > 0) {
+        const bmi = (weight / (height * height)).toFixed(1);
+        let status = "";
+        if (bmi < 18.5) status = "Insuffisance pondérale";
+        else if (bmi < 25) status = "Poids normal";
+        else if (bmi < 30) status = "Surpoids";
+        else status = "Obésité";
+        bmiLive.textContent = `IMC en direct : ${bmi} — ${status}`;
+    } else {
+        bmiLive.textContent = "";
+    }
+}
+
+heightInput.addEventListener('input', calculateBMI);
+weightInput.addEventListener('input', calculateBMI);
+</script>
+</body>
+</html>
